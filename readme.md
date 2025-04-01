@@ -260,6 +260,197 @@ movies.apply(lambda x: x.split()[0].upper())
 subs.apply(lambda x: 'Good Day' if x > 200 else 'Bad Day')
 ```
 
+# DataFrame Important Functions
+
+## Required Datasets
+
+- `ipl-matches.csv`
+- `movies.csv`
+- `batsman_runs_series.csv`
+
+Ensure these datasets are available in the same directory as your script for proper functioning.
+
+## Table of Contents
+
+- [value\_counts()](#value_counts)
+- [sort\_values()](#sort_values)
+- [rank()](#rank)
+- [sort\_index()](#sort_index)
+- [set\_index()](#set_index)
+- [reset\_index()](#reset_index)
+- [rename()](#rename)
+- [nunique()](#nunique)
+- [isnull() / notnull()](#isnull-notnull)
+- [dropna()](#dropna)
+- [fillna()](#fillna)
+- [drop\_duplicates()](#drop_duplicates)
+- [drop()](#drop)
+- [apply()](#apply)
+
+## sort\_values()
+
+The `sort_values()` function sorts a DataFrame or Series by the specified labels along a given axis.
+
+```python
+movies = pd.read_csv('movies.csv')
+
+# Sort by single column
+movies.sort_values('title_x', ascending=False)
+
+# Sort by multiple columns
+movies.sort_values(['year_of_release', 'title_x'], ascending=[True, False])
+```
+
+---
+
+## rank()
+
+The `rank()` function provides rank values to data points within a Series or DataFrame.
+
+```python
+batsman = pd.read_csv('batsman_runs_series.csv')
+batsman['rank'] = batsman['batsman_run'].rank(ascending=False)
+batsman.sort_values('rank')
+```
+
+---
+
+## sort\_index()
+
+The `sort_index()` function sorts a DataFrame or Series by its index.
+
+```python
+marks = pd.Series({'maths': 67, 'english': 57, 'science': 89, 'hindi': 100})
+marks.sort_index(ascending=False)
+
+movies.sort_index(ascending=False)
+```
+
+---
+
+## set\_index()
+
+The `set_index()` function is used to set the DataFrame index using an existing column.
+
+```python
+batsman.set_index('batter', inplace=True)
+```
+
+---
+
+## reset\_index()
+
+The `reset_index()` function resets the index of a DataFrame, converting it back to the default integer index. Can convert Series to DataFrame.
+
+```python
+batsman.reset_index(inplace=True)
+# how to replace existing index without loosing
+batsman.reset_index().set_index('rank')
+# series to datafram using reset_index
+a = pd.Series([1,2,3,4])
+print(a)
+a.reset_index()
+marks_series.reset_index()
+```
+
+---
+
+## rename()
+
+The `rename()` function is used to rename rows or columns.
+
+```python
+movies.rename(columns={'imdb_id': 'imdb'}, inplace=True)
+movies.rename(index={'Uri: The Surgical Strike': 'Uri'}, inplace=True)
+```
+
+---
+
+## nunique()
+
+The `nunique()` function returns the number of unique values in a Series or DataFrame.
+
+```python
+ipl['Season'].nunique()
+```
+
+---
+
+## isnull() / notnull()
+
+These functions detect missing values in a DataFrame or Series.
+
+```python
+students['name'].isnull()  # Returns True for NaN values
+students['name'].notnull()  # Returns True for non-NaN values
+
+students.isnull().sum()  # Total count of missing values per column
+```
+
+---
+
+## dropna()
+
+The `dropna()` function is used to remove missing values from a DataFrame or Series. By default, it removes rows containing any null value.
+
+```python
+students.dropna()  # Removes rows with any NaN value
+students.dropna(subset=['marks'])  # Removes rows where 'marks' is NaN
+students.dropna(how='all')  # Removes rows where all values are NaN
+```
+
+---
+
+## fillna()
+
+The `fillna()` function replaces missing values with a specified value or strategy (like forward fill or backward fill).
+
+```python
+students.fillna(0)  # Replaces all NaN values with 0
+students.fillna(method='ffill')  # Forward fills NaN values with the last valid observation
+students.fillna({'marks': 0, 'name': 'Unknown'})  # Custom fill for specific columns
+```
+
+---
+
+## drop\_duplicates()
+
+The `drop_duplicates()` function removes duplicate rows from a DataFrame. Duplicate detection can be limited to specific columns.
+
+```python
+students.drop_duplicates()  # Drops fully duplicated rows
+students.drop_duplicates(subset=['name'], keep='first')  # Keeps the first occurrence of each duplicate
+students.drop_duplicates(subset=['name'], keep='last')  # Keeps the last occurrence of each duplicate
+```
+
+---
+
+## drop()
+
+The `drop()` function removes rows or columns by labels or index values.
+
+```python
+students.drop('marks', axis=1)  # Drops the 'marks' column
+students.drop([0, 2])  # Drops rows by index labels 0 and 2
+students.drop(index=[1, 3], columns=['marks', 'name'])  # Drops specific rows and columns simultaneously
+```
+
+---
+
+## apply()
+
+The `apply()` function allows applying a function along a particular axis (rows or columns) of a DataFrame.
+
+```python
+students['marks'].apply(lambda x: x * 2)  # Applies a lambda function to each element of 'marks'
+students.apply(sum, axis=0)  # Applies the sum function column-wise
+students.apply(sum, axis=1)  # Applies the sum function row-wise
+```
+
+---
+
+
+
 ## Conclusion
 This repository currently focuses on Pandas **Series**, demonstrating various ways to create, manipulate, and analyze Series objects. In future updates, we will explore **DataFrames** and other essential Pandas functionalities.
 
