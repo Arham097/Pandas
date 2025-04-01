@@ -447,6 +447,158 @@ students.apply(sum, axis=0)  # Applies the sum function column-wise
 students.apply(sum, axis=1)  # Applies the sum function row-wise
 ```
 
+## Group-By Objects
+
+This section covers various operations that can be performed on GroupBy objects using the pandas library. It demonstrates grouping data by specific columns, applying aggregation functions, looping over groups, and working with multiple columns for advanced analysis.
+
+### Importing Dataset
+```python
+movies = pd.read_csv('imdb-top-1000.csv')
+movies.head(2)
+```
+
+### Creating GroupBy Objects
+```python
+genre = movies.groupby('Genre')
+```
+
+## Applying Built-In Aggregation Functions
+
+```python
+# Applying standard deviation aggregation to all groups
+genre.std()
+
+# Find top 3 Genres by total earning
+movies.groupby('Genre')['Gross'].sum().sort_values(ascending=False).head(3)
+
+# Find the genre with the highest average IMDB rating
+movies.groupby('Genre')['IMDB_Rating'].mean().sort_values(ascending=False).head(1)
+
+# Find the most popular director by total votes
+movies.groupby('Director')['No_of_Votes'].sum().sort_values(ascending=False).head(1)
+
+# Find the highest-rated movie of each genre
+movies.groupby('Genre')['IMDB_Rating'].max()
+
+# Find the number of movies done by each actor
+movies.groupby('Star1')['Runtime'].count().sort_values(ascending=False)
+```
+
+## GroupBy Attributes and Methods
+- `len`: Find total number of groups.
+- `size`: Find the number of items in each group.
+- `first()` / `last()`: Access the first or last item of each group.
+- `nth()`: Retrieve the nth item of each group.
+- `get_group()`: Retrieve a specific group.
+- `groups`: Dictionary with group labels and indices.
+- `describe()`: Generate descriptive statistics for each group.
+- `sample()`: Randomly sample rows from each group.
+- `nunique()`: Count unique values in each group.
+
+### Example Usage
+```python
+# Number of unique groups
+len(movies.groupby('Genre'))  # Output: 14
+movies['Genre'].nunique()      # Output: 14
+
+# Size of each group
+movies.groupby('Genre').size()  # Returns number of rows in each group
+
+# First and Last items of each group
+movies.groupby('Genre').first()
+movies.groupby('Genre').last()
+
+# nth Item of each group
+movies.groupby('Genre').nth(5)  # Retrieves the 6th movie in each group
+
+# Using get_group() method
+movies.groupby('Genre').get_group('Drama')
+
+# Accessing groups attribute
+# It gives dictionary with key is Genre and value will be the list containing index where same Genre present
+movies.groupby('Genre').groups
+
+# Descriptive statistics for each group
+movies.groupby('Genre').describe()
+
+# Random Sampling from groups
+movies.groupby('Genre').sample(2, replace=True)
+# replce parameter Allow or disallow sampling of the same row more than once as Action appear multiple times without replace true 2 action movies not goint to show and throw error
+```
+
+## Aggregation Methods
+Aggregation can be done using dictionaries, lists, or a combination of both.
+
+```python
+movies.groupby('Genre').agg({
+    'Runtime': 'mean',
+    'IMDB_Rating': 'mean',
+    'No_of_Votes': 'sum',
+    'Gross': 'sum',
+    'Metascore': 'min'
+})
+
+movies.groupby('Genre').agg(['min', 'max'])
+```
+
+## Looping Over Groups
+```python
+# Finding highest-rated movie of each genre
+
+genres = movies.groupby('Genre')
+df = pd.DataFrame(columns=movies.columns)
+for group, data in genres:
+    df = pd.concat([df, data[data['IMDB_Rating'] == data['IMDB_Rating'].max()]])
+
+df
+```
+
+## Split-Apply-Combine Mechanism
+The split-apply-combine mechanism involves splitting a dataset, applying a function to each group independently, and then combining the results into a DataFrame.
+
+```python
+# Apply a function to each group
+
+def startWithA(group):
+    return group['Series_Title'].str.startswith('A').sum()
+
+genres.apply(startWithA)
+```
+
+## GroupBy with Multiple Columns
+Grouping by multiple columns allows for more detailed analysis.
+
+```python
+# Grouping by Director and Star1
+
+duo = movies.groupby(['Director', 'Star1'])
+
+duo.size()
+duo.get_group(('Aamir Khan', 'Amole Gupte'))
+```
+
+### Example Tasks
+- Find the most earning actor-director combination.
+- Find the best actor-genre combo in terms of average Metascore.
+- Apply multiple aggregation functions to a grouped dataset.
+
+```python
+# find the most earning actor->director combo
+duo['Gross'].sum().sort_values(ascending=False).head(1)
+
+
+# Find the best actor-genre combo in terms of average Metascore.
+combo = movies.groupby(['Star1', 'Genre'])
+combo['Metascore'].mean().sort_values(ascending=False).head(1)
+
+# Apply multiple aggregation functions to a grouped dataset.
+duo.agg(['min', 'max', 'mean'])
+```
+
+This section provides a comprehensive understanding of GroupBy operations with pandas, showcasing various methods and attributes to manipulate and analyze datasets effectively.
+
+
+
 ---
 
 
