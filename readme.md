@@ -598,6 +598,112 @@ duo.agg(['min', 'max', 'mean'])
 This section provides a comprehensive understanding of GroupBy operations with pandas, showcasing various methods and attributes to manipulate and analyze datasets effectively.
 
 
+# Merging, Joining, and Concatenating in Pandas
+
+This script demonstrates various techniques for merging, joining, and concatenating DataFrames using the Pandas library. It includes examples of concatenation, joins (inner, left, right, outer), and self-joins, highlighting their differences and use cases.
+
+
+## Datasets Used
+The following CSV files are loaded using `pd.read_csv()`:
+- `courses.csv`
+- `students.csv`
+- `reg-month1.csv` (November registrations)
+- `reg-month2.csv` (December registrations)
+- `matches.csv`
+- `deliveries.csv`
+
+## Code Explanation
+
+### Imports
+```python
+import pandas as pd
+```
+
+### Loading DataFrames
+```python
+courses = pd.read_csv('courses.csv')
+students = pd.read_csv('students.csv')
+nov = pd.read_csv('reg-month1.csv')
+dec = pd.read_csv('reg-month2.csv')
+matches = pd.read_csv('matches.csv')
+delivery = pd.read_csv('deliveries.csv')
+```
+
+## Concatenation
+
+### `pd.concat()`
+Concatenates two or more DataFrames with the same number of columns vertically.
+
+```python
+pd.concat([nov, dec], ignore_index=True)
+```
+
+- `ignore_index=True`: Assigns a continuous index across concatenated DataFrames.
+
+### `append()`
+An alternative to `pd.concat()` that works similarly.
+
+```python
+nov.append(dec, ignore_index=True)
+```
+
+### MultiIndex Concatenation
+```python
+multi = pd.concat([nov, dec], keys=['Nov', 'Dec'])  # Creates a MultiIndex DataFrame
+multi.loc[('Dec', 3)]  # Fetching value by MultiIndex
+```
+
+### Horizontal Concatenation
+Concatenates DataFrames along columns using `axis=1`.
+
+```python
+pd.concat([nov, dec], axis=1)
+```
+
+## Joins
+
+### Inner Join
+Returns only the rows where keys match in both DataFrames.
+
+```python
+regs = pd.concat([nov, dec], ignore_index=True)
+students.merge(regs, how='inner', on='student_id')
+```
+
+### Left Join
+Returns all rows from the left DataFrame, with matching rows from the right. Missing values are filled with NaN.
+
+```python
+courses.merge(regs, how='left', on='course_id')
+```
+
+### Right Join
+Returns all rows from the right DataFrame, with matching rows from the left. Missing values are filled with NaN.
+
+```python
+temp_df = pd.DataFrame({
+    'student_id': [26, 27, 28],
+    'name': ['Nitish', 'Ankit', 'Rahul'],
+    'partner': [28, 26, 17]
+})
+
+students = pd.concat([students, temp_df], ignore_index=True)
+students.merge(regs, how='right', on='student_id')
+```
+
+### Outer Join
+Returns all rows from both DataFrames, filling non-matching entries with NaN.
+
+```python
+students.merge(regs, how='outer', on='student_id')
+```
+
+### Self Join
+Joining a DataFrame with itself to compare rows within the same table, usually using `merge()` with different aliases.
+
+```python
+students.merge(students, right_on='partner', left_on='student_id')[['name_x', 'name_y']]
+```
 
 ---
 
