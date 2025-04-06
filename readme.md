@@ -705,6 +705,222 @@ Joining a DataFrame with itself to compare rows within the same table, usually u
 students.merge(students, right_on='partner', left_on='student_id')[['name_x', 'name_y']]
 ```
 
+## MultiIndex Objects
+
+### 1. MultiIndex Series
+
+multiindex series (also known as Hierarchical Indexing) allow multiple index levels within a single index.
+
+**How to create a MultiIndex object:**
+1. `pd.MultiIndex.from_tuples()`
+```python
+index_val = [('cse',2019),('cse',2020),('cse',2021),('cse',2022),
+             ('ece',2019),('ece',2020),('ece',2021),('ece',2022)]
+multiindex = pd.MultiIndex.from_tuples(index_val)
+multiindex
+```
+
+2. `pd.MultiIndex.from_product()`
+```python
+index = pd.MultiIndex.from_product([['cse','ece'],[2019,2020,2021,2022]])
+```
+
+**Creating a Series with MultiIndex object:**
+```python
+s = pd.Series([1,2,3,4,5,6,7,8], index=multiindex)
+s
+```
+
+**Fetching items from the Series:**
+```python
+print(s['ece'])           # Returns series with 'ece' index
+print(s[('ece',2020)])    # Returns a specific value
+```
+
+### 2. MultiIndex DataFrame
+
+**MultiIndex DataFrame from rows perspective:**
+```python
+branchdf1 = pd.DataFrame([
+  [1,2],[3,4],[5,6],[7,8],[9,10],[11,12],[13,14],[15,16]
+], index=multiindex, columns=['avg_package','students'])
+branchdf1
+```
+
+```python
+branchdf1['students']  # gives MultiIndex series
+```
+
+**MultiIndex DataFrame from columns perspective:**
+```python
+branch_df2 = pd.DataFrame([
+    [1,2,0,0], [3,4,0,0], [5,6,0,0], [7,8,0,0]
+], index=[2019,2020,2021,2022],
+columns=pd.MultiIndex.from_product([['delhi','mumbai'],['avg_package','students']]))
+branch_df2
+```
+
+```python
+branch_df2.loc[2019]
+```
+
+**MultiIndex DataFrame in terms of both rows and columns:**
+```python
+branch_df3 = pd.DataFrame([
+    [1,2,0,0],[3,4,0,0],[5,6,0,0],[7,8,0,0],
+    [9,10,0,0],[11,12,0,0],[13,14,0,0],[15,16,0,0]
+], index=multiindex,
+columns=pd.MultiIndex.from_product([['delhi','mumbai'],['avg_package','students']]))
+branch_df3
+```
+
+## Stacking and Unstacking
+
+**Stack -> convert columns into rows:**
+```python
+branch_df3.stack()           # Converts inner level of index into rows
+```
+
+**Unstack -> convert rows into columns:**
+```python
+branch_df3.unstack()
+```
+
+### Working with MultiIndex DataFrames
+
+```python
+branch_df3.head()              # First few rows
+branch_df3.shape              # Dimensions
+branch_df3.info()             # Info
+branch_df3.duplicated()       # Check duplicates
+branch_df3.isnull()           # Check NaNs
+```
+
+**Extracting Rows:**
+```python
+branch_df3.loc[('cse',2020)]
+branch_df3.loc[('cse',2019):('ece',2020):2]  # extract alternatively
+branch_df3.iloc[0:5:2]
+```
+
+**Extracting Columns:**
+```python
+branch_df3['delhi']['students']
+branch_df3.iloc[:,1:3]
+branch_df3.iloc[[0,3],[0,3]]
+```
+
+**Sorting Index:**
+```python
+branch_df3.sort_index(ascending=False)
+branch_df3.sort_index(ascending=[False,True])
+branch_df3.sort_index(level=1,ascending=False)
+```
+
+**Transpose:**
+```python
+branch_df3.transpose()
+```
+
+**Swap Level:**
+```python
+branch_df3.swaplevel()               # row-wise
+branch_df3.swaplevel(axis=1)         # column-wise
+```
+
+### Long Vs Wide Data
+
+![Image description](https://drive.google.com/uc?export=view&id=1aWxH2yrWpjMRtAIh9PpLylRuIswE2s4-)
+
+**Wide format** is where we have a single row for every data point with multiple columns to hold the values of various attributes.
+
+**Long format** is where, for each data point we have as many rows as the number of attributes and each row contains the value of a particular attribute for a given data point.
+
+### melt
+
+**Convert wide to long format:**
+```python
+pd.DataFrame({'cse':[120]}).melt()
+```
+
+```python
+pd.DataFrame({'cse':[120],'ece':[100],'mec':[50]}).melt(var_name='branch',value_name='students')
+```
+
+```python
+pd.DataFrame({
+    'branch':['cse','ece','mech'],
+    '2020':[100,150,60],
+    '2021':[120,130,80],
+    '2022':[150,140,70]
+}).melt(id_vars=['branch'], var_name='year', value_name='students')
+```
+
+## Pivot Table
+
+The pivot table takes simple column-wise data as input, and groups the entries into a two-dimensional table that provides a multidimensional summarization of the data.
+
+```python
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+df = sns.load_dataset('tips')
+df.head()
+```
+
+**Average bill by gender:**
+```python
+df.groupby('sex')['total_bill'].mean()
+```
+
+**Average by gender and smoker status:**
+```python
+df.groupby(['sex','smoker'])['total_bill'].mean().unstack()
+```
+
+**Using pivot_table:**
+```python
+df.pivot_table(index='sex', columns='smoker', values='total_bill')
+```
+
+### aggfunc
+
+> Additional parameter to apply any aggregate function:
+> `std`, `sum`, `max`, `min`, etc. Default is `mean`.
+
+```python
+df.pivot_table(index='sex', columns='smoker', values='total_bill', aggfunc='std')
+df.pivot_table(index='sex', columns='smoker', values='total_bill', aggfunc='max')
+df.pivot_table(index='sex', columns='smoker', margins=True)
+```
+
+**Multidimensional pivot:**
+```python
+df.pivot_table(index=['sex','smoker'], columns=['day','time'],
+aggfunc={'size':'mean','tip':'max','total_bill':'sum'})
+```
+
+**Plotting Graphs:**
+```python
+df = pd.read_csv('expense_data.csv')
+df['Category'].value_counts().plot(kind='pie')
+```
+
+**Convert date column to datetime and extract month:**
+```python
+df['Date'] = pd.to_datetime(df['Date'])
+df['Month'] = df['Date'].dt.month_name()
+```
+
+**Pivot Table Visualization:**
+```python
+df.pivot_table(index='Month', columns='Category', values='INR', fill_value=0).plot()
+df.pivot_table(index='Month', columns='Income/Expense', values='INR', aggfunc='sum').plot()
+```
+
+
+
 ---
 
 
