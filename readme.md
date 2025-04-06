@@ -836,7 +836,7 @@ branch_df3.swaplevel(axis=1)         # column-wise
 
 **Long format** is where, for each data point we have as many rows as the number of attributes and each row contains the value of a particular attribute for a given data point.
 
-### melt
+## melt
 
 **Convert wide to long format:**
 ```python
@@ -917,6 +917,194 @@ df['Month'] = df['Date'].dt.month_name()
 ```python
 df.pivot_table(index='Month', columns='Category', values='INR', fill_value=0).plot()
 df.pivot_table(index='Month', columns='Income/Expense', values='INR', aggfunc='sum').plot()
+```
+
+
+# 📘 **Pandas Strings and Datetime Operations**
+
+## 🧐 **Vectorization in Pandas**
+> Vectorization means operating on entire sequences (like lists, tuples, etc.) at once, instead of using loops to process elements one-by-one.
+
+```python
+import numpy as np
+a = np.array([1, 2, 3])
+a * 2  # Output: array([2, 4, 6])
+```
+
+### 🚫 Vectorization in Vanilla Python Fails
+```python
+s = ['cat', 'mat', None, 'rat']
+[i.startswith('c') for i in s]  # Throws error due to None value
+```
+
+### ✅ Pandas Handles This Gracefully
+```python
+import pandas as pd
+s = pd.Series(['cat', 'mat', None, 'rat'])
+s.str.startswith('c')  # Handles None without error
+```
+
+## 😳 **Pandas Titanic Dataset - String Operations**
+```python
+df = pd.read_csv('titanic.csv')
+df['Name']
+```
+
+### 🔠 Common String Functions
+```python
+df['Name'].str.lower()
+df['Name'].str.upper()
+df['Name'].str.capitalize()
+df['Name'].str.title()
+df['Name'].str.len()
+df['Name'].str.strip()
+```
+
+### 🧬 Extracting Last Name and Title
+```python
+df['lastname'] = df['Name'].str.split(',').str.get(0)
+df[['title', 'firstname']] = df['Name'].str.split(',').str.get(1).str.strip().str.split(' ', n=1, expand=True)
+df['title'].value_counts()
+```
+
+### 🪄 Replace Titles
+```python
+df['title'] = df['title'].str.replace('Ms.', 'Miss.')
+df['title'] = df['title'].str.replace('Mlle.', 'Miss.')
+```
+
+### 🔍 Filtering Names
+```python
+df[df['firstname'].str.endswith('A')]
+df[df['firstname'].str.contains('john', case=False)]
+df[df['firstname'].str.contains('^[aeiouAEIOU].+[aeiouAEIOU]$')]
+```
+
+### ✂️ Slicing
+```python
+df['Name'].str[::-1]
+df['Name'].str[:5]
+```
+
+---
+
+## 🕒 **Timestamp Object**
+
+> Time stamps represent specific moments in time, like `2022-10-24 19:00`.
+
+### ⏳ Creating Timestamp Objects
+```python
+type(pd.Timestamp('2023/11/04'))
+pd.Timestamp('2023-11-02')
+pd.Timestamp('2023, 11, 02')
+pd.Timestamp('2023')  # Defaults to Jan 1
+pd.Timestamp("5th January 2022")
+pd.Timestamp('5th January 2022 10:25:20AM')
+```
+
+### 🧱 From datetime.datetime Object
+```python
+import datetime as dt
+x = pd.Timestamp(dt.datetime(2024, 2, 1, 10, 23, 33))
+```
+
+### 🔎 Attributes
+```python
+x.year, x.month, x.day, x.hour, x.minute, x.second
+```
+
+---
+
+## ❓ **Why Use Specialized Datetime Objects?**
+
+- Python’s `datetime` is user-friendly but not performance-efficient on large datasets.
+- NumPy’s `datetime64` uses compact 64-bit integer representation for speed and memory savings.
+- Example:
+```python
+a = np.array('2025-03-01', dtype=np.datetime64)
+a + np.arange(3)  # Fast date array addition
+```
+- Pandas `Timestamp` = datetime ease + NumPy efficiency
+
+---
+
+## 📂 **DatetimeIndex Object**
+
+> Collection of Pandas Timestamps, usable for indexing.
+
+```python
+dti = pd.DatetimeIndex(['2024/1/1', '2024/1/2', '2024/1/3'])
+
+dti2 = pd.DatetimeIndex([dt.datetime(2023,1,1), dt.datetime(2022,1,1), dt.datetime(2021,1,1)])
+
+dt_index = pd.DatetimeIndex([pd.Timestamp(2023,1,1), pd.Timestamp(2022,1,1), pd.Timestamp(2021,1,1)])
+
+pd.Series([1, 2, 3], index=dt_index)
+```
+
+---
+
+## 🗖️ **`date_range()` Function**
+
+> Create time sequences with flexible frequencies.
+
+```python
+pd.date_range(start='2023/1/1', end='2023/1/31', freq='D')     # Daily
+pd.date_range(start='2023/1/1', end='2023/1/31', freq='3D')    # Every 3rd day
+pd.date_range(start='2023/1/1', end='2023/1/31', freq='W')     # Weekly
+pd.date_range(start='2023/1/5', end='2023/2/28', freq='W-THU') # Thursdays
+pd.date_range(start='2023/1/5', end='2023/1/10', freq='6H')    # Every 6 hours
+pd.date_range(start='2023/1/5', end='2023/2/28', freq='M')     # Month end
+pd.date_range(start='2023/1/5', end='2023/2/28', freq='MS')    # Month start
+pd.date_range(start='2023/1/5', end='2030/2/28', freq='A')     # Year end
+pd.date_range(start='2023/1/5', periods=25, freq='M')          # 25 monthly points
+```
+
+---
+
+## ⟳ **`to_datetime()` Function**
+
+> Convert strings or objects to `Timestamp`/`DatetimeIndex`.
+
+```python
+s = pd.Series(['2023/1/1', '2022/1/1', '2021/1/1'])
+s = pd.to_datetime(s)
+s.dt.day_name()
+```
+
+### ⚠️ Handling Errors
+```python
+s = pd.Series(['2023/1/1', '2022/1/1', '2021/130/1'])
+pd.to_datetime(s, errors='coerce').dt.month_name()  # invalid format → NaT
+```
+
+### 📓 Apply to DataFrame
+```python
+df = pd.read_csv('expense_data.csv')
+df['Date'] = pd.to_datetime(df['Date'])
+df.info()
+```
+
+---
+
+## 🛠️ **`dt` Accessor**
+
+> Access datetime properties on a Series
+
+```python
+df[df['Date'].dt.is_quarter_start]
+
+# Plotting
+import matplotlib.pyplot as plt
+plt.plot(df['Date'], df['INR'])
+
+df['Day_Name'] = df['Date'].dt.day_name()
+df.groupby('Day_Name')['INR'].sum().plot(kind='bar')
+
+df['Month_Name'] = df['Date'].dt.month_name()
+df.groupby('Month_Name')['INR'].sum().plot(kind='bar')
+
+df[df['Date'].dt.is_month_end]
 ```
 
 
